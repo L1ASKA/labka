@@ -52,7 +52,11 @@ class TicTacToe:
         self.player_choice = choice
         self.current_player = "X"  # Игрок начинает первым
         self.choose_frame.pack_forget()  # Прячем кнопки выбора стороны
-        self.start_game()
+        if self.player_choice == "X":
+            self.current_player = "O"  # Бот начинает игру за "O"
+            self.bot_move()
+        else:
+            self.start_game()
 
     def start_game(self):
         """Запуск игры после выбора стороны"""
@@ -163,3 +167,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
