@@ -1,6 +1,6 @@
 import time
 from math import factorial
-
+#F(x<2) = 3; F(n) = (-1)n*(F(n-1)/n! + F(n-5) /(2n)!)
 def f_recursive(n, memo={}):
     """Рекурсивный подход с мемоизацией."""
     if n in memo:
