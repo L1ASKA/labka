@@ -1,17 +1,15 @@
 import tkinter as tk
 import math
-#Требуется написать ООП с графическим интерфейсом в соответствии со своим вариантом.
+#Задание на л.р. №8 ООП 24
 #Должны быть реализованы минимум один класс, три атрибута, четыре метода (функции).
 #Ввод данных из файла с контролем правильности ввода.
-#Базы данных не использовать. При необходимости сохранять информацию в файлах, разделяя значения запятыми (CSV файлы) или пробелами.
-#Для GUI и визуализации использовать библиотеку tkinter.
+#Базы данных не использовать. При необходимости сохранять информацию в файлах,
+#разделяя значения запятыми (CSV файлы) или пробелами. Для GUI и визуализации использовать библиотеку tkinter.
 #Объекты – треугольники
 #Функции:	проверка пересечения
 #визуализация
 #раскраска
 #поворот вокруг одной из вершин
-
-
 
 class Triangle:
     def __init__(self, x1, y1, x2, y2, x3, y3, color="blue"):
@@ -53,7 +51,7 @@ class Triangle:
         return x_new, y_new
 
 
-def load_data(filename):
+def load_data(filename, error_label):
     """Загрузка данных треугольников из файла."""
     triangles = []
     try:
@@ -65,9 +63,9 @@ def load_data(filename):
                         x1, y1, x2, y2, x3, y3 = map(float, parts)
                         triangles.append(Triangle(x1, y1, x2, y2, x3, y3))
                     except ValueError:
-                        print(f"Ошибка в данных: {line}")
+                        error_label.config(text=f"Ошибка в данных: {line}")
     except FileNotFoundError:
-        print("Файл не найден. Убедитесь, что файл существует и указан правильно.")
+        error_label.config(text="Файл не найден. Убедитесь, что файл существует и указан правильно.")
     return triangles
 
 
@@ -75,19 +73,41 @@ class Application(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Triangle Operations")
-        self.canvas = tk.Canvas(self, width=500, height=500)
-        self.canvas.pack()
+        self.geometry("600x600")
+        self.configure(bg="#2e2e2e")  # Темный фон для всего окна
+
+        # Canvas для рисования
+        self.canvas = tk.Canvas(self, width=500, height=500, bg="white")
+        self.canvas.pack(padx=20, pady=20)
+
+        # Фрейм для ошибок с тенью
+        self.error_frame = tk.Frame(self, bg="#2e2e2e", bd=2, relief="solid", padx=10, pady=5)
+        self.error_frame.pack(padx=20, pady=10, fill=tk.X)
+        self.error_label = tk.Label(self.error_frame, text="", fg="red", font=("Arial", 12, "bold"))
+        self.error_label.pack()
 
         # Загружаем данные из файла
-        self.triangles = load_data("triangles.csv")
+        self.triangles = load_data("triangles.csv", self.error_label)
 
-        # Кнопки для действий
-        self.btn_visualize = tk.Button(self, text="Визуализировать", command=self.visualize)
-        self.btn_visualize.pack()
-        self.btn_rotate = tk.Button(self, text="Повернуть", command=self.rotate)
-        self.btn_rotate.pack()
-        self.btn_color = tk.Button(self, text="Изменить цвет", command=self.change_color)
-        self.btn_color.pack()
+        # Фрейм для кнопок с тенью
+        self.button_frame = tk.Frame(self, bg="#2e2e2e")
+        self.button_frame.pack(padx=20, pady=20)
+
+        # Современные кнопки с эффектами
+        self.btn_visualize = tk.Button(self.button_frame, text="Визуализировать", command=self.visualize,
+                                       bg="#4CAF50", fg="white", font=("Arial", 14), relief="flat", bd=2,
+                                       width=20, height=2, activebackground="#45a049", pady=10)
+        self.btn_visualize.grid(row=0, column=0, padx=10, pady=10)
+
+        self.btn_rotate = tk.Button(self.button_frame, text="Повернуть", command=self.rotate,
+                                    bg="#2196F3", fg="white", font=("Arial", 14), relief="flat", bd=2,
+                                    width=20, height=2, activebackground="#1976d2", pady=10)
+        self.btn_rotate.grid(row=0, column=1, padx=10, pady=10)
+
+        self.btn_color = tk.Button(self.button_frame, text="Изменить цвет", command=self.change_color,
+                                   bg="#FF5722", fg="white", font=("Arial", 14), relief="flat", bd=2,
+                                   width=20, height=2, activebackground="#e64a19", pady=10)
+        self.btn_color.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
 
         # Список цветов для цикличного изменения
         self.colors = ["red", "blue", "green", "yellow", "purple", "orange"]
@@ -114,7 +134,7 @@ class Application(tk.Tk):
         # Обновить индекс для следующего цвета
         self.color_index = (self.color_index + 1) % len(self.colors)
 
-        self.visualize()  # Перерисовать треугольники с новым цветом
+        self.visualize()  # Перерисовать треугольники
 
 
 if __name__ == "__main__":

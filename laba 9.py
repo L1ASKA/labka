@@ -1,23 +1,24 @@
 import tkinter as tk
 from tkinter import messagebox
+import random
 
 
 class TicTacToe:
     def __init__(self, root):
         self.root = root
         self.root.title("Крестики-нолики")
-        self.root.geometry("400x500")  # Размер окна
+        self.root.geometry("400x500")
         self.root.config(bg="#f0f0f0")
 
-        self.board = [""] * 9  # игровое поле (9 клеток)
-        self.current_player = None  # еще не выбран игрок
-        self.player_choice = None  # символ игрока (X или O)
+        self.board = [""] * 9  # Игровое поле (9 клеток)
+        self.current_player = None  # Текущий игрок
+        self.player_choice = None  # Символ игрока (X или O)
 
-        self.buttons = []  # список для хранения кнопок
-
+        self.buttons = []  # Список для хранения кнопок
         self.create_widgets()
 
     def create_widgets(self):
+        """Создание всех графических элементов."""
         # Создаем контейнер для игрового поля
         self.game_frame = tk.Frame(self.root, bg="#f0f0f0")
         self.game_frame.pack(pady=20)
@@ -47,64 +48,67 @@ class TicTacToe:
                                   activebackground="#0b7dda")
         self.o_button.grid(row=0, column=1, padx=10, pady=10)
 
-    def set_player_choice(self, choice):
-        """Выбор стороны игрока"""
-        self.player_choice = choice
-        self.current_player = "X"  # Игрок начинает первым
-        self.choose_frame.pack_forget()  # Прячем кнопки выбора стороны
-        if self.player_choice == "X":
-            self.current_player = "O"  # Бот начинает игру за "O"
-            self.bot_move()
-        else:
-            self.start_game()
+        # Кнопка для сброса игры
+        self.new_game_button = tk.Button(self.root, text="Новая игра", font=('Arial', 14), command=self.reset_game,
+                                         bg="#FF5733", fg="#ffffff", width=20, height=2, bd=0, relief="raised",
+                                         activebackground="#FF2E00")
+        self.new_game_button.pack(pady=20)
 
-    def start_game(self):
-        """Запуск игры после выбора стороны"""
-        if self.player_choice == "O":
-            self.bot_move()  # Если игрок выбрал "O", то ходит бот первым
+    def set_player_choice(self, choice):
+        """Устанавливает выбор игрока (X или O) и начинает игру."""
+        self.player_choice = choice
+        if choice == "X":
+            self.current_player = "O"  # Бот ходит первым, если игрок выбрал X
+            self.choose_frame.pack_forget()  # Скрываем выбор
+            self.bot_move()  # Бот делает первый ход
+        else:
+            self.current_player = "O"  # Игрок ходит первым, если выбрал O
+            self.choose_frame.pack_forget()  # Скрываем выбор
 
     def make_move(self, i):
-        if self.board[i] == "" and self.check_winner() is None and self.current_player == "X":
+        """Делает ход игрока, если клетка пустая и игра не завершена."""
+        if self.board[i] == "" and self.check_winner() is None and self.current_player == self.player_choice:
             self.board[i] = self.current_player
-            self.buttons[i].config(text=self.current_player, bg="#ddd", fg="#333")
+            self.buttons[i].config(text=self.current_player, bg="#ddd", fg="#333", state=tk.DISABLED)
             if self.check_winner():
                 self.show_winner()
             else:
                 self.switch_player()
-                self.bot_move()
+                if self.current_player != self.player_choice:
+                    self.bot_move()
 
     def bot_move(self):
-        """Ход бота, который выбирает оптимальный ход"""
-        if self.current_player == "O":  # Бот ходит только когда его ход
+        """Ход бота (более умный ход)."""
+        if self.current_player != self.player_choice:
             best_move = self.best_move()
-            self.board[best_move] = "O"
-            self.buttons[best_move].config(text="O", bg="#ddd", fg="#333")
+            self.board[best_move] = self.current_player
+            self.buttons[best_move].config(text=self.current_player, bg="#ddd", fg="#333", state=tk.DISABLED)
             if self.check_winner():
                 self.show_winner()
             else:
                 self.switch_player()
 
     def best_move(self):
-        """Находит наилучший ход для бота"""
-        # Проверка, можно ли победить
+        """Находит наилучший ход для бота: блокирует победу игрока, пытается выиграть."""
+        # Проверка на победу бота
         for i in range(9):
             if self.board[i] == "":
-                self.board[i] = "O"
-                if self.check_winner() == "O":
+                self.board[i] = self.current_player
+                if self.check_winner() == self.current_player:
                     self.board[i] = ""
                     return i
                 self.board[i] = ""
 
-        # Блокировка хода игрока (если он может победить)
+        # Блокировка победы игрока
         for i in range(9):
             if self.board[i] == "":
-                self.board[i] = "X"
-                if self.check_winner() == "X":
+                self.board[i] = self.player_choice
+                if self.check_winner() == self.player_choice:
                     self.board[i] = ""
                     return i
                 self.board[i] = ""
 
-        # Взять центральную клетку, если она пустая
+        # Центральная клетка
         if self.board[4] == "":
             return 4
 
@@ -113,57 +117,51 @@ class TicTacToe:
             if self.board[i] == "":
                 return i
 
-        # Пробуем брать боковые клетки
+        # Пробуем боковые клетки
         for i in [1, 3, 5, 7]:
             if self.board[i] == "":
                 return i
 
-        return random.choice([i for i in range(9) if self.board[i] == ""])  # если не осталось выигрышных ходов
+        # Если нет других ходов, выбираем случайный
+        return random.choice([i for i in range(9) if self.board[i] == ""])
 
     def switch_player(self):
-        """Меняет текущего игрока"""
-        self.current_player = "O" if self.current_player == "X" else "X"
+        """Переключение между игроками."""
+        self.current_player = 'X' if self.current_player == 'O' else 'O'
 
     def check_winner(self):
-        """Проверка на победу"""
+        """Проверка на наличие победителя."""
         winning_combinations = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Горизонтальные линии
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Вертикальные линии
-            [0, 4, 8], [2, 4, 6]  # Диагонали
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],  # Ряды
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],  # Колонки
+            [0, 4, 8], [2, 4, 6]              # Диагонали
         ]
-
-        for combination in winning_combinations:
-            if self.board[combination[0]] == self.board[combination[1]] == self.board[combination[2]] != "":
-                return self.board[combination[0]]
-
+        for combo in winning_combinations:
+            if self.board[combo[0]] == self.board[combo[1]] == self.board[combo[2]] != "":
+                return self.board[combo[0]]
         if "" not in self.board:
-            return "Draw"  # Ничья
-
-        return None  # Игра продолжается
+            return "Ничья"  # Ничья, если все клетки заполнены
+        return None
 
     def show_winner(self):
-        """Показывает сообщение о победе"""
+        """Отображение победителя или ничьей."""
         winner = self.check_winner()
-        if winner == "Draw":
-            messagebox.showinfo("Ничья", "Игра завершена. Ничья!")
+        if winner == "Ничья":
+            messagebox.showinfo("Результат игры", "Ничья!")
         else:
-            messagebox.showinfo("Победа", f"Победил игрок {winner}!")
+            messagebox.showinfo("Результат игры", f"Победил {winner}!")
         self.reset_game()
 
     def reset_game(self):
-        """Сбрасывает игру"""
+        """Сброс игры."""
         self.board = [""] * 9
-        for button in self.buttons:
-            button.config(text="", bg="#ffffff", fg="#000000")
         self.current_player = None
-        self.choose_frame.pack()  # Показываем кнопки выбора стороны снова
+        self.player_choice = None
+        for button in self.buttons:
+            button.config(text="", bg="#ffffff", state=tk.NORMAL)  # Сброс кнопок
+        self.choose_frame.pack(pady=10)  # Показываем выбор игрока
 
 
-def main():
-    root = tk.Tk()
-    game = TicTacToe(root)
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    main()
+root = tk.Tk()
+game = TicTacToe(root)
+root.mainloop()
